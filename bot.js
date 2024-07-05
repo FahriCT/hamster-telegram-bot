@@ -14,7 +14,7 @@ bot.command('start', async (ctx) => {
         2. /ck = Cek query id mu\n
         3. /run = Jalankan Bot\n
         4. /r = Refresh status bot mu\n
-        5. /delet = Hapus query id
+        5. /dlt = Hapus query id
     `);
 });
 
@@ -57,7 +57,7 @@ bot.command('run', async (ctx) => {
     }
     
     try {
-        exec(`python3 /path/to/hamster.py ${query_id}`, (error, stdout, stderr) => {
+        exec(`python3 hamster.py ${query_id}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Gagal menjalankan bot: ${error.message}`);
                 ctx.reply(`Gagal menjalankan bot: ${error.message}`);
