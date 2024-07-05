@@ -6,10 +6,9 @@ Note : not tested yet
 - Copy Token
 - Git Clone https://github.com/FahriCT/hamster-telegram-bot
 - cd hamster-telegram-bot
-- npm init -y
-- npm install telegraf
-- change token
-- node bot.js
+- npm install
+- paste token in token.txt
+- npm start
 
 # Thanks to
 https://github.com/adearman/
