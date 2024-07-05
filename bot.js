@@ -1,33 +1,40 @@
 const { Telegraf } = require('telegraf');
 const { exec } = require('child_process');
-
-// Token bot Anda
-const BOT_TOKEN = 'YOUR_BOT_TOKEN';
+const fs = require('fs');
+const BOT_TOKEN = fs.readFileSync('token.txt', 'utf8').trim();
 const bot = new Telegraf(BOT_TOKEN);
-
-// Dictionary untuk menyimpan query_id user
+const dataPath = 'data/';
 const user_data = {};
+const user_status = {};
 
-// Command handler untuk /start
 bot.command('start', async (ctx) => {
     await ctx.reply(`
-        BOT HAMSTER\n
+        BOT FAHRI HAMSTER\n
         1. /in <query_id> = Input Query id\n
         2. /ck = Cek query id mu\n
         3. /run = Jalankan Bot\n
-        4. /r = Refresh status bot mu
+        4. /r = Refresh status bot mu\n
+        5. /delet = Hapus query id
     `);
 });
 
-// Command handler untuk /in <query_id>
+
 bot.command('in', async (ctx) => {
     const query_id = ctx.message.text.split(' ')[1];
     const user_id = ctx.message.from.id;
-    user_data[user_id] = query_id;
-    await ctx.reply('Query id berhasil disimpan');
+
+    
+    try {
+        fs.writeFileSync(`${dataPath}${user_id}.txt`, query_id.trim());
+        user_data[user_id] = query_id.trim();
+        await ctx.reply('Query id berhasil disimpan');
+    } catch (error) {
+        console.error(`Gagal menyimpan query id: ${error.message}`);
+        await ctx.reply('Gagal menyimpan query id');
+    }
 });
 
-// Command handler untuk /ck
+
 bot.command('ck', async (ctx) => {
     const user_id = ctx.message.from.id;
     const query_id = user_data[user_id];
@@ -39,7 +46,7 @@ bot.command('ck', async (ctx) => {
     }
 });
 
-// Command handler untuk /run
+
 bot.command('run', async (ctx) => {
     const user_id = ctx.message.from.id;
     const query_id = user_data[user_id];
@@ -50,7 +57,7 @@ bot.command('run', async (ctx) => {
     }
     
     try {
-        exec(`python3 hamster.py ${query_id}`, (error, stdout, stderr) => {
+        exec(`python3 /path/to/hamster.py ${query_id}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Gagal menjalankan bot: ${error.message}`);
                 ctx.reply(`Gagal menjalankan bot: ${error.message}`);
@@ -71,7 +78,8 @@ bot.command('run', async (ctx) => {
                 `[ Level Energy ] : ${extractValue(output, "Level Energy")}\n` +
                 `[ Level Tap ] : ${extractValue(output, "Level Tap")}\n` +
                 `[ Exchange ] : ${extractValue(output, "Exchange")}\n`;
-
+            
+            user_status[user_id] = response;
             ctx.reply(response);
         });
     } catch (e) {
@@ -80,14 +88,36 @@ bot.command('run', async (ctx) => {
     }
 });
 
-// Command handler untuk /r
+
+bot.command('r', async (ctx) => {
+    const user_id = ctx.message.from.id;
+    const status = user_status[user_id];
+    
+    if (status) {
+        await ctx.reply(`Ini adalah status bot mu saat ini:\n${status}`);
+    } else {
+        await ctx.reply('Anda belum menjalankan bot. Gunakan perintah /run untuk menjalankan.');
+    }
+});
 
 
-// Function untuk mengekstrak nilai dari output
+bot.command('dlt', async (ctx) => {
+    const user_id = ctx.message.from.id;
+
+    
+    try {
+        fs.unlinkSync(`${dataPath}${user_id}.txt`);
+        delete user_data[user_id];
+        await ctx.reply('Query id berhasil dihapus');
+    } catch (error) {
+        console.error(`Gagal menghapus query id: ${error.message}`);
+        await ctx.reply('Gagal menghapus query id');
+    }
+});
+
 function extractValue(output, label) {
     const match = output.match(new RegExp(`\\[ ${label} \\] : (\\d+)`));
     return match ? match[1] : 'N/A';
 }
 
-// Mulai bot
 bot.launch();
