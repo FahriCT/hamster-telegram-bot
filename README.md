@@ -1,5 +1,5 @@
 # hamster-telegram-bot
-Note : not tested yet
+Note : still have many bug
 
 # how to install
 - Make New Bot in BotFather
@@ -11,4 +11,4 @@ Note : not tested yet
 - npm start
 
 # Thanks to
-https://github.com/adearman/
+[Aderman](https://github.com/adearman/hamsterkombat)
