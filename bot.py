@@ -1,8 +1,10 @@
 import subprocess
 import logging
 import re
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram import ForceReply
+from telegram.ext import Updater, CommandHandler, CallbackContext, CallbackQueryHandler, MessageHandler, Filters, ApplicationBuilder, ContextTypes
+from telegram.update import Update
+
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -14,7 +16,7 @@ user_data = {}
 
 def start(update: Update, context: CallbackContext) -> None:
     update.message.reply_text(
-        'BOT FAHRI HAMSTER\n'
+        'BOT HAMSTER\n'
         '1. /in <query_id> = Input Query id\n'
         '2. /ck = Cek query id mu\n'
         '3. /run = Jalankan Bot\n'
@@ -95,7 +97,7 @@ def refresh_status(update: Update, context: CallbackContext) -> None:
         return
     
     try:
-        result = subprocess.run(['python3', '/path/to/hamster.py', query_id], capture_output=True, text=True)
+        result = subprocess.run(['python3', 'hamster.py', query_id], capture_output=True, text=True)
         if result.returncode == 0:
             output = result.stdout
             level = re.search(r"\[ Level \] : (\d+)", output)
