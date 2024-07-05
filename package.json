@@ -1,0 +1,14 @@
+{
+  "name": "hamster-telegram-bot",
+  "version": "1.0.0",
+  "description": "Hamster Telegram Bot",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "author": "FahriCT",
+  "license": "ISC",
+  "dependencies": {
+    "telegraf": "^4.7.0"
+  }
+}
