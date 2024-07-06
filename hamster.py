@@ -721,10 +721,10 @@ if cek_task_list.lower() == 'y':
         else:
             print(Fore.RED + Style.BRIGHT + "Claim cipher gagal.", flush=True)
 
-if auto_claim_daily_combo == 'y':
-    for i in range(1, 4):  # Asumsi ada 3 combo
-        combo = "ihir"
-        combo_list.append(combo)
+     if auto_claim_daily_combo.lower() == 'y':
+         for i in range(1, 4):  # Asumsi ada 3 combo
+             combo = "ihir"
+             combo_list.append(combo)
 
 def print_welcome_message():
     print(r"""
@@ -740,7 +740,7 @@ def print_welcome_message():
 
 if __name__ == "__main__":
     if len(sys.argv) != 6:
-        print("Usage: python3 hamster.py <query> <auto_upgrade_passive> <cek_task_list> <auto_claim_daily_combo> <ask_cipher> <auto_claim_daily_combo>")
+        print("Usage: python3 hamster.py <query> <auto_upgrade_passive> <cek_task_list> <auto_claim_daily_combo> <ask_cipher>")
         sys.exit(1)
 
     query = sys.argv[1]
@@ -748,6 +748,6 @@ if __name__ == "__main__":
     cek_task_list = sys.argv[3]
     auto_claim_daily_combo = sys.argv[4]
     ask_cipher = sys.argv[5]
-    auto_claim_daily_combo = sys.argv[6]
 
-    main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask_cipher, auto_claim_daily_combo)
+    main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask_cipher)
+
