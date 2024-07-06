@@ -697,12 +697,12 @@ if cek_task_list.lower() == 'y':
             print(Fore.RED + Style.BRIGHT + "Gagal mendapatkan daftar tugas.", flush=True)
 
     # Auto Claim Daily Combo
-    if auto_claim_daily_combo.lower() == 'y':
-        response = claim_daily_combo(token)
-        if response.status_code == 200:
-            print(Fore.GREEN + Style.BRIGHT + "Claim daily combo berhasil.", flush=True)
-        else:
-            print(Fore.RED + Style.BRIGHT + "Claim daily combo gagal.", flush=True)
+#    if auto_claim_daily_combo.lower() == 'y':
+#        response = claim_daily_combo(token)
+#        if response.status_code == 200:
+#            print(Fore.GREEN + Style.BRIGHT + "Claim daily combo berhasil.", flush=True)
+#        else:
+#            print(Fore.RED + Style.BRIGHT + "Claim daily combo gagal.", flush=True)
 
     # Auto Upgrade Passive
     if auto_upgrade_passive.lower() == 'y':
