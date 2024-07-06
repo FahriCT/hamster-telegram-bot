@@ -1,4 +1,7 @@
-import sys
+# Made with ❤ by @adearman
+# Update at github.com/adearman/hamsterkombat
+# Free for use
+import argparse
 import requests
 import json
 import time
@@ -6,10 +9,18 @@ from datetime import datetime
 from itertools import cycle
 from colorama import init, Fore, Style
 
+# Initialize colorama
 init(autoreset=True)
 
+
+# Tambahkan variabel global untuk menyimpan pilihan combo
 auto_claim_daily_combo = None
 combo_list = []
+
+def load_tokenss(token_file):
+    with open(token_file, 'r') as file:
+        tokens = file.read().strip().split('\n')
+    return tokens
 
 def load_tokens(filename):
     with open(filename, 'r') as file:
@@ -28,6 +39,7 @@ def get_headers(token):
         'Sec-Fetch-Site': 'same-site',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         'Content-Type': 'application/json'
+   
     }
 
 def get_token(init_data_raw):
@@ -48,6 +60,7 @@ def get_token(init_data_raw):
     data = json.dumps({"initDataRaw": init_data_raw})
     try:
         response = requests.post(url, headers=headers, data=data)
+        # print(response.status_code)
         if response.status_code == 200:
             return response.json()['authToken']
         elif response.status_code == 403:
@@ -67,13 +80,18 @@ def get_token(init_data_raw):
     except Exception as e:
         print(Fore.RED + Style.BRIGHT + f"\rGagal Mendapatkan Token. Error: {str(e)}", flush=True)
     return None
-
 def authenticate(token):
     url = 'https://api.hamsterkombat.io/auth/me-telegram'
     headers = get_headers(token)
     response = requests.post(url, headers=headers)
     return response
-    
+
+def sync_clicker(token):
+    url = 'https://api.hamsterkombat.io/clicker/sync'
+    headers = get_headers(token)
+    response = requests.post(url, headers=headers)
+    return response
+
 def claim_daily(token):
     url = 'https://api.hamsterkombat.io/clicker/check-task'
     headers = get_headers(token)
@@ -82,7 +100,6 @@ def claim_daily(token):
     data = json.dumps({"taskId": "streak_days"})
     response = requests.post(url, headers=headers, data=data)
     return response
-    
 def upgrade(token, upgrade_type):
     url = 'https://api.hamsterkombat.io/clicker/buy-boost'
     headers = get_headers(token)
@@ -117,6 +134,8 @@ def exchange(token):
     response = requests.post(url, headers=headers, data=data)
     return response
 
+
+
 def claim_cipher(token, cipher_text):
     url = 'https://api.hamsterkombat.io/clicker/claim-daily-cipher'
     headers = get_headers(token)
@@ -134,7 +153,12 @@ def claim_cipher(token, cipher_text):
             print(Fore.RED + Style.BRIGHT + "Gagal mengurai JSON dari respons.", flush=True)
             return None
     elif response.status_code == 400:
-        return response
+        try:
+            # Coba parse JSON dan lanjutkan proses
+            return response
+        except json.JSONDecodeError:
+            print(Fore.RED + Style.BRIGHT + "Gagal mengurai JSON dari respons.", flush=True)
+            return None
     elif response.status_code == 500:
         print(Fore.RED + Style.BRIGHT + f"Gagal claim cipher, Internal Server Error", flush=True)
         return response
@@ -150,15 +174,24 @@ def check_task(token, task_id):
     data = json.dumps({"taskId": task_id})
     response = requests.post(url, headers=headers, data=data)
     return response
-
+def cek_booster(token):
+    url = 'https://api.hamsterkombat.io/clicker/boosts-for-buy'
+    headers = get_headers(token)
+    response = requests.post(url, headers=headers)
+    return response
 def use_booster(token):
-    url = 'https://api.hamsterkombat.io/clicker/check-task'
+    url = 'https://api.hamsterkombat.io/clicker/buy-boost'
     headers = get_headers(token)
     headers['accept'] = 'application/json'
     headers['content-type'] = 'application/json'
     data = json.dumps({"boostId": "BoostFullAvailableTaps", "timestamp": int(time.time())})
     response = requests.post(url, headers=headers, data=data)
     return response
+
+
+def read_upgrade_list(filename):
+    with open(filename, 'r') as file:
+        return [line.strip() for line in file]
 
 
 
@@ -169,7 +202,7 @@ def get_available_upgrades(token):
     if response.status_code == 200:
         try:
             upgrades = response.json()['upgradesForBuy']
-            print(Fore.GREEN + Style.BRIGHT + f"\r[ Upgrade Minning ] : Berhasil mendapatkan list upgrade.", flush=True)
+            # print(Fore.GREEN + Style.BRIGHT + f"\r[ Upgrade Minning ] : Berhasil mendapatkan list upgrade.", flush=True)
             return upgrades
         except json.JSONDecodeError:
             print(Fore.RED + Style.BRIGHT + "\r[ Upgrade Minning ] : Gagal mendapatkan response JSON.", flush=True)
@@ -183,6 +216,7 @@ def buy_upgrade(token, upgrade_id, upgrade_name):
     url = 'https://api.hamsterkombat.io/clicker/buy-upgrade'
     headers = get_headers(token)
     data = json.dumps({"upgradeId": upgrade_id, "timestamp": int(time.time())})
+    time.sleep(3)
     response = requests.post(url, headers=headers, data=data)
     if response.status_code == 200:
         try:
@@ -193,14 +227,59 @@ def buy_upgrade(token, upgrade_id, upgrade_name):
         try:
             error_response = response.json()
             if error_response.get('error_code') == 'INSUFFICIENT_FUNDS':
-                print(Fore.RED + Style.BRIGHT + f"\r[ Upgrade Minning ] : Coin tidak cukup wkwkw :V", flush=True)
+                print(Fore.RED + Style.BRIGHT + f"\r[ Upgrade Minning ] : Coin tidak cukup wkwkw :V                             ", flush=True)
                 return 'insufficient_funds'
+            elif error_response.get('error_code') == 'UPGRADE_COOLDOWN':
+                cooldown_seconds = error_response.get('cooldownSeconds', 0)
+                print(Fore.RED + Style.BRIGHT + f"\r[ Upgrade Minning ] : Upgrade {upgrade_name} masih dalam cooldown. Tersisa {cooldown_seconds} detik.", flush=True)
+                return {'cooldown': True, 'cooldown_seconds': cooldown_seconds}
             else:
                 print(Fore.RED + Style.BRIGHT + f"\r[ Upgrade Minning ] : Failed upgrade {upgrade_name}: {error_response}", flush=True)
-                return []
+                return {'error': True, 'message': error_response}
         except json.JSONDecodeError:
             print(Fore.RED + Style.BRIGHT + f"\r[ Upgrade Minning ] : Gagal mendapatkan respons JSON. Status: {response.status_code}", flush=True)
+            return {'error': True, 'status_code': response.status_code}
+def get_available_upgrades_combo(token):
+    url = 'https://api.hamsterkombat.io/clicker/upgrades-for-buy'
+    headers = get_headers(token)
+    response = requests.post(url, headers=headers)
+    if response.status_code == 200:
+        try:
+            upgrades = response.json()['upgradesForBuy']
+            print(Fore.GREEN + Style.BRIGHT + f"\r[ Daily Combo ] : Berhasil mendapatkan list upgrade.", flush=True)
+            return upgrades
+        except json.JSONDecodeError:
+            print(Fore.RED + Style.BRIGHT + "\r[ Daily Combo ] : Gagal mendapatkan response JSON.", flush=True)
             return []
+    else:
+        print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Gagal mendapatkan daftar upgrade: Status {response.status_code}", flush=True)
+        return []
+
+
+def buy_upgrade_combo(token, upgrade_id):
+    url = 'https://api.hamsterkombat.io/clicker/buy-upgrade'
+    headers = get_headers(token)
+    data = json.dumps({"upgradeId": upgrade_id, "timestamp": int(time.time())})
+    response = requests.post(url, headers=headers, data=data)
+    if response.status_code == 200:
+        try:
+            print(Fore.GREEN + Style.BRIGHT + f"\r[ Daily Combo ] : Combo {upgrade_id} berhasil dibeli.", flush=True)
+        except json.JSONDecodeError:
+            print(Fore.RED + Style.BRIGHT + "\r[ Daily Combo ] : Gagal mengurai JSON saat upgrade.", flush=True)
+        return response
+    else:
+        try:
+            error_response = response.json()
+            if error_response.get('error_code') == 'INSUFFICIENT_FUNDS':
+                print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Coin tidak cukup.", flush=True)
+                return 'insufficient_funds'
+            else:
+                # print(f"error saat beli combo: {error_response}")
+                # print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Error: {error_response.get('error_message', 'No error message provided')}", flush=True)
+                return error_response
+        except json.JSONDecodeError:
+            print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Gagal mendapatkan respons JSON. Status: {response.status_code}", flush=True)
+            return None
 
 def auto_upgrade_passive_earn(token, max_price):
     upgrade_list = read_upgrade_list('upgrade_list.txt')
@@ -249,19 +328,43 @@ def auto_upgrade_passive_earn(token, max_price):
         else:
             print(Fore.YELLOW + Style.BRIGHT + "[ Upgrade Minning ] : Tidak ada upgrade yang memenuhi kriteria saat ini.")
             break  # Keluar dari loop jika tidak ada upgrade yang tersedia
+def check_and_upgrade(token, upgrade_id, required_level):
+    upgrades = get_available_upgrades_combo(token)
+    if upgrades:
+        for upgrade in upgrades:
+      
+            if upgrade['id'] == upgrade_id and upgrade['level'] < required_level + 1:
+                print(Fore.CYAN + Style.BRIGHT + f"[ Daily Combo ] : Upgrading {upgrade_id}", flush=True)
+                req_level_total = required_level +1
+                for _ in range(req_level_total - upgrade['level']):
+                    result = buy_upgrade_combo(token, upgrade_id)
+                    # print("buying..")
+                    if isinstance(result, dict) and 'error_code' in result and result['error_code'] == 'UPGRADE_NOT_AVAILABLE':
+                        # print("ada error")
+                        needed_upgrade = result['error_message'].split(':')[-1].strip().split()
+                        needed_upgrade_id = needed_upgrade[1]
+                        needed_upgrade_level = int(needed_upgrade[-1])
+                        print(Fore.YELLOW + Style.BRIGHT + f"\r[ Daily Combo ] : Mencoba membeli {needed_upgrade_id} level {needed_upgrade_level}", flush=True)
+                        if check_and_upgrade(token, needed_upgrade_id, needed_upgrade_level):
+                            print(Fore.GREEN + Style.BRIGHT + f"\r[ Daily Combo ] : Berhasil upgrade {needed_upgrade_id} ke level {needed_upgrade_level}. Mencoba kembali upgrade {upgrade_id}.", flush=True)
+                            continue  # Setelah berhasil, coba lagi upgrade asli
+                        else:
+                            print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Gagal upgrade {needed_upgrade_id} ke level {needed_upgrade_level}", flush=True)
+                            return False
+                    elif result == 'insufficient_funds':
+                        print("coin")
+                        print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Coin tidak cukup untuk upgrade {upgrade_id}", flush=True)
+                        return False
+                    elif result.status_code != 200:
+                        print(f"error response : {result}")
+                        print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Gagal upgrade {upgrade_id} dengan error: {result}", flush=True)
+                        return False
+                print(Fore.GREEN + Style.BRIGHT + f"\r[ Daily Combo ] : Upgrade {upgrade_id} berhasil dilakukan ke level {required_level}", flush=True)
+                return True
+    # print(Fore.GREEN + Style.BRIGHT + f"\r[ Daily Combo ] : Upgrade {upgrade_id} berhasil dilakukan ke level {required_level}", flush=True)
+    return False
+import requests
 
-def check_combo_purchased(token):
-    url = 'https://api.hamsterkombat.io/clicker/upgrades-for-buy'
-    headers = get_headers(token)
-    response = requests.post(url, headers=headers)
-    if response.status_code == 200:
-        data = response.json()
-        purchased_combos = data.get('dailyCombo', {}).get('upgradeIds', [])
-        return purchased_combos
-    else:
-        print(Fore.RED + Style.BRIGHT + f"Gagal mendapatkan status combo. Status: {response.status_code}", flush=True)
-        return None
-        
 def claim_daily_combo(token):
     url = 'https://api.hamsterkombat.io/clicker/claim-daily-combo'
     headers = {
@@ -293,73 +396,126 @@ def claim_daily_combo(token):
             print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Faile. {response}", flush=True)
         return error_response
     
-
-
-
-def sync_clicker(token):
-    url = 'https://api.hamsterkombat.io/clicker/sync'
+def check_combo_purchased(token):
+    url = 'https://api.hamsterkombat.io/clicker/upgrades-for-buy'
     headers = get_headers(token)
     response = requests.post(url, headers=headers)
-    return response
+    if response.status_code == 200:
+        data = response.json()
+        purchased_combos = data.get('dailyCombo', {}).get('upgradeIds', [])
+        return purchased_combos
+    else:
+        print(Fore.RED + Style.BRIGHT + f"Gagal mendapatkan status combo. Status: {response.status_code}", flush=True)
+        return None
 
-#MAIN CODE
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Hamster Kombat BOT CLI')
+
+    parser.add_argument('-u', '--auto-upgrade-passive', choices=['y', 'n'], default='n',
+                        help="Auto Upgrade Mining (Passive Earn)? (default 'n')")
+
+    parser.add_argument('-m', '--max-price', type=int,
+                        help="Masukkan harga maksimum upgrade (contoh 1500000)")
+
+    parser.add_argument('-c', '--cek-task-list', choices=['y', 'n'], default='n',
+                        help="Enable Cek Task? (default 'n')")
+
+    parser.add_argument('-a', '--auto-claim-cipher', choices=['y', 'n'], default='n',
+                        help="Auto Claim Cipher Daily / Sandi Harian? (default 'n')")
+
+    parser.add_argument('-t', '--cipher-text',
+                        help="Masukkan cipher nya / sandi harian")
+
+    parser.add_argument('-d', '--auto-claim-daily-combo', choices=['y', 'n'], default='n',
+                        help="Auto Claim Daily Combo? (default 'n')")
+
+    parser.add_argument('-l', '--combo-list', nargs='+',
+                        help="Daftar id combo (e.g., -l id1 id2 id3)")
+
+    parser.add_argument('-f', '--token-file', required=True,
+                        help="Path ke file token (contoh initdata.txt)")
+
+    return parser.parse_args()
+
+# MAIN CODE
 cek_task_dict = {}
 claimed_ciphers = set()
-def main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask_cipher):
+
+combo_upgraded = {}
+def main():
+	args = parse_arguments()
+    global cek_task_dict, claimed_ciphers, auto_claim_daily_combo, combo_list, combo_upgraded
+    
     print_welcome_message()
     print(Fore.GREEN + Style.BRIGHT + "Starting Hamster Kombat....\n\n")
+    init_data = load_tokenss()
+    token_cycle = cycle(init_data)
 
+    
     token_dict = {}  # Dictionary to store successful tokens
-    token = token_dict.get(query)
-    
-    if token:
-        print(Fore.GREEN + Style.BRIGHT + f"\n\n\rMenggunakan token yang sudah ada...", end="", flush=True)
-    else:
-        print(Fore.GREEN + Style.BRIGHT + f"\n\n\rMendapatkan token...              ", end="", flush=True)
-        token = get_token(query)
-        if token:
-            token_dict[query] = token
-            print(Fore.GREEN + Style.BRIGHT + f"\n\n\rBerhasil mendapatkan token    ", flush=True)
-        else:
-            print(Fore.RED + Style.BRIGHT + f"\n\n\rGagal mendapatkan token\n\n", flush=True)
-            return  # Keluar jika gagal mendapatkan token
-
-    response = authenticate(token)
-    
-    ## TOKEN AMAN
-    if response.status_code == 200:
-        user_data = response.json()
-        username = user_data.get('telegramUser', {}).get('username', 'Username Kosong')
-        firstname = user_data.get('telegramUser', {}).get('firstName', 'Kosong')
-        lastname = user_data.get('telegramUser', {}).get('lastName', 'Kosong')
+    while True:
+        init_data_raw = next(token_cycle)
+        token = token_dict.get(init_data_raw)
         
-        print(Fore.GREEN + Style.BRIGHT + f"\r\n======[{Fore.WHITE + Style.BRIGHT} {username} | {firstname} {lastname} {Fore.GREEN + Style.BRIGHT}]======")
+        if token:
+            print(Fore.GREEN + Style.BRIGHT + f"\n\n\rMenggunakan token yang sudah ada...", end="", flush=True)
+        else:
+            print(Fore.GREEN + Style.BRIGHT + f"\n\n\rMendapatkan token...              ", end="", flush=True)
 
-        # Sync Clicker
-        print(Fore.GREEN + f"\rGetting info user...", end="", flush=True)
-        response = sync_clicker(token)
+            token = get_token(init_data_raw)
+            # print(token)
+            if token:
+                token_dict[init_data_raw] = token
+                print(Fore.GREEN + Style.BRIGHT + f"\n\n\rBerhasil mendapatkan token    ", flush=True)
+            else:
+                print(Fore.RED + Style.BRIGHT + f"\n\n\rBeralih ke akun selanjutnya\n\n", flush=True)
+                continue  # Lanjutkan ke iterasi berikutnya jika gagal mendapatkan token
+
+         # Inisialisasi status combo_upgraded untuk token ini jika belum ada
+        if init_data_raw not in combo_upgraded:
+            combo_upgraded[init_data_raw] = False
+
+        response = authenticate(token)
+   
+        ## TOKEN AMAN
         if response.status_code == 200:
-            clicker_data = response.json()['clickerUser']
-            print(Fore.YELLOW + Style.BRIGHT + f"\r[ Level ] : {clicker_data['level']}          ", flush=True)
-            print(Fore.YELLOW + Style.BRIGHT + f"[ Total Earned ] : {int(clicker_data['totalCoins'])}")
-            print(Fore.YELLOW + Style.BRIGHT + f"[ Coin ] : {int(clicker_data['balanceCoins'])}")
-            print(Fore.YELLOW + Style.BRIGHT + f"[ Energy ] : {clicker_data['availableTaps']}")
-            boosts = clicker_data['boosts']
-            boost_max_taps_level = boosts.get('BoostMaxTaps', {}).get('level', 0)
-            boost_earn_per_tap_level = boosts.get('BoostEarnPerTap', {}).get('level', 0)
+
+            user_data = response.json()
+            username = user_data.get('telegramUser', {}).get('username', 'Username Kosong')
+            firstname = user_data.get('telegramUser', {}).get('firstName', 'Kosong')
+            lastname = user_data.get('telegramUser', {}).get('lastName', 'Kosong')
             
-            print(Fore.CYAN + Style.BRIGHT + f"[ Level Energy ] : {boost_max_taps_level}")
-            print(Fore.CYAN + Style.BRIGHT + f"[ Level Tap ] : {boost_earn_per_tap_level}")
-            print(Fore.CYAN + Style.BRIGHT + f"[ Exchange ] : {clicker_data['exchangeId']}")
-            if clicker_data['exchangeId'] == None:
-                print(Fore.GREEN + '\rSeting exchange to OKX..', end="", flush=True)
-                exchange_set = exchange(token)
-                if exchange_set.status_code == 200:
-                    print(Fore.GREEN + Style.BRIGHT + '\rSukses set exchange ke OKX', flush=True)
-                else:
-                    print(Fore.RED + Style.BRIGHT + '\rGagal set exchange', flush=True)
-            print(Fore.CYAN + Style.BRIGHT + f"[ Passive Earn ] : {clicker_data['earnPassivePerHour']}\n")
-            print(Fore.GREEN + f"\r[ Tap Status ] : Tapping ...", end="", flush=True)
+            print(Fore.GREEN + Style.BRIGHT + f"\r\n======[{Fore.WHITE + Style.BRIGHT} {username} | {firstname} {lastname} {Fore.GREEN + Style.BRIGHT}]======")
+
+            # Sync Clicker
+            print(Fore.GREEN + f"\rGetting info user...", end="", flush=True)
+            response = sync_clicker(token)
+            if response.status_code == 200:
+                clicker_data = response.json()['clickerUser']
+                print(Fore.YELLOW + Style.BRIGHT + f"\r[ Level ] : {clicker_data['level']}          ", flush=True)
+                print(Fore.YELLOW + Style.BRIGHT + f"[ Total Earned ] : {int(clicker_data['totalCoins'])}")
+                print(Fore.YELLOW + Style.BRIGHT + f"[ Coin ] : {int(clicker_data['balanceCoins'])}")
+                print(Fore.YELLOW + Style.BRIGHT + f"[ Energy ] : {clicker_data['availableTaps']}")
+                boosts = clicker_data['boosts']
+                boost_max_taps_level = boosts.get('BoostMaxTaps', {}).get('level', 0)
+                boost_earn_per_tap_level = boosts.get('BoostEarnPerTap', {}).get('level', 0)
+                
+                print(Fore.CYAN + Style.BRIGHT + f"[ Level Energy ] : {boost_max_taps_level}")
+                print(Fore.CYAN + Style.BRIGHT + f"[ Level Tap ] : {boost_earn_per_tap_level}")
+                print(Fore.CYAN + Style.BRIGHT + f"[ Exchange ] : {clicker_data['exchangeId']}")
+                # print(clicker_data['exchangeId'])
+                if clicker_data['exchangeId'] == None:
+                    print(Fore.GREEN + '\rSeting exchange to OKX..',end="", flush=True)
+                    exchange_set = exchange(token)
+
+                    if exchange_set.status_code == 200:
+                        print(Fore.GREEN + Style.BRIGHT +'\rSukses set exchange ke OKX', flush=True)
+                    else:
+                        print(Fore.RED + Style.BRIGHT +'\rGagal set exchange', flush=True)
+                print(Fore.CYAN + Style.BRIGHT + f"[ Passive Earn ] : {clicker_data['earnPassivePerHour']}\n")
+                
+                
+                print(Fore.GREEN + f"\r[ Tap Status ] : Tapping ...", end="", flush=True)
 
 
 
@@ -402,7 +558,6 @@ def main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask
                     # continue 
                 print(Fore.GREEN + f"\r[ Checkin Daily ] : Checking...", end="", flush=True)
 
-                        
                 time.sleep(1)
                 # Check Task
                 response = claim_daily(token)
@@ -419,21 +574,25 @@ def main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask
                     if token not in claimed_ciphers:
                         print(Fore.GREEN + Style.BRIGHT + f"\r[ Claim Cipher ] : Claiming cipher...", end="", flush=True)
                         response = claim_cipher(token, cipher_text)
-                        if response.status_code == 200:
-                            bonuscoins = response.json()['dailyCipher']['bonusCoins']
-                            print(Fore.GREEN + Style.BRIGHT + f"\r[ Claim Cipher ] : Berhasil claim cipher | {bonuscoins} bonus coin", flush=True)
-                            claimed_ciphers.add(token)
-                        else:
-                            if response is not None:
+                        try:
+                            if response.status_code == 200:
+                                bonuscoins = response.json()['dailyCipher']['bonusCoins']
+                                print(Fore.GREEN + Style.BRIGHT + f"\r[ Claim Cipher ] : Berhasil claim cipher | {bonuscoins} bonus coin", flush=True)
+                                claimed_ciphers.add(token)
+                            else:
                                 error_info = response.json()
                                 if error_info.get('error_code') == 'DAILY_CIPHER_DOUBLE_CLAIMED':
                                     print(Fore.RED + Style.BRIGHT + f"\r[ Claim Cipher ] : Cipher already claimed", flush=True)
-                            else:
-                                print(Fore.RED + Style.BRIGHT + f"\r[ Claim Cipher ] : Gagal claim cipher {response}", flush=True)
+                                else:
+                                    print(Fore.RED + Style.BRIGHT + f"\r[ Claim Cipher ] : Gagal claim cipher dengan error: {error_info.get('error_message', 'No error message')}", flush=True)
+                        except json.JSONDecodeError:
+                            print(Fore.RED + Style.BRIGHT + "\r[ Claim Cipher ] : Gagal mengurai JSON dari respons.", flush=True)
+                        except Exception as e:
+                            print(Fore.RED + Style.BRIGHT + f"\r[ Claim Cipher ] : Terjadi error: {str(e)}", flush=True)
                     else:
-                            print(Fore.RED + Style.BRIGHT + f"\r[ Claim Cipher ] : Gagal claim cipher {response}", flush=True)
-
-               if auto_claim_daily_combo == 'y' and not combo_upgraded[init_data_raw]:
+                        print(Fore.RED + Style.BRIGHT + f"\r[ Claim Cipher ] : Cipher sudah pernah di-claim sebelumnya.", flush=True)
+                # daily combo
+                if auto_claim_daily_combo == 'y' and not combo_upgraded[init_data_raw]:
                     cek = claim_daily_combo(token)
                     if cek.get('error_code') != 'DAILY_COMBO_DOUBLE_CLAIMED':
                         purchased_combos = check_combo_purchased(token)
@@ -469,7 +628,25 @@ def main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask
                                 continue
 
                     
-
+                
+                # Upgrade 
+                # if auto_upgrade_energy == 'y':
+                #     print(Fore.GREEN + f"\r[ Upgrade ] : Upgrading Energy....", end="", flush=True)
+                #     upgrade_response = upgrade(token, "BoostMaxTaps")
+                #     if upgrade_response.status_code == 200:
+                #         level_boostmaxtaps = upgrade_response.json()['clickerUser']['boosts']['BoostMaxTaps']['level']
+                #         print(Fore.GREEN + Style.BRIGHT + f"\r[ Upgrade ] : Energy Upgrade to level {level_boostmaxtaps}", flush=True)
+                #     else:
+                #         print(Fore.RED + Style.BRIGHT + "\r[ Upgrade ] : Failed to upgrade energy", flush=True)
+                # if auto_upgrade_multitap == 'y':
+                #     print(Fore.GREEN + f"\r[ Upgrade ] : Upgrading MultiTap....", end="", flush=True)
+                #     upgrade_response = upgrade(token, "BoostEarnPerTap")
+                #     if upgrade_response.status_code == 200:
+                #         level_boostearnpertap = upgrade_response.json()['clickerUser']['boosts']['BoostEarnPerTap']['level']
+                #         print(Fore.GREEN + Style.BRIGHT + f"\r[ Upgrade ] : MultiTap Upgrade to level {level_boostearnpertap}", flush=True)
+                #     else:
+                #         print(Fore.RED + Style.BRIGHT + "\r[ Upgrade ] : Failed to upgrade multitap", flush=True)
+            
                 # List Tasks
                 print(Fore.GREEN + f"\r[ List Task ] : Checking...", end="", flush=True)
                 if cek_task_list == 'y':
@@ -502,7 +679,6 @@ def main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask
                 # cek upgrade
                 
                 if auto_upgrade_passive == 'y':
-                	max_price = 10000000
                     print(Fore.GREEN + f"\r[ Upgrade Minning ] : Checking...", end="", flush=True)
                     auto_upgrade_passive_earn(token, max_price)
                     
@@ -512,53 +688,40 @@ def main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask
                 print(Fore.RED + Style.BRIGHT + f"\r Gagal mendapatkan info user {response.status_code}", flush=True)
 
 
+
+        ## TOKEN MATI        
+        elif response.status_code == 401:
+            error_data = response.json()
+            if error_data.get("error_code") == "NotFound_Session":
+                print(Fore.RED + Style.BRIGHT + f"=== [ Token Invalid {token} ] ===")
+                token_dict.pop(init_data_raw, None)  # Remove invalid token
+                token = None  # Set token ke None untuk mendapatkan token baru di iterasi berikutnya
+            else:
+                print(Fore.RED + Style.BRIGHT + "Authentication failed with unknown error")
+        else:
+            print(Fore.RED + Style.BRIGHT + f"Error with status code: {response.status_code}")
+            token = None  # Set token ke None jika terjadi error lain
             
-    ## TOKEN MATI        
-    elif response.status_code == 401:
-        error_data = response.json()
-        if error_data.get("error_code") == "NotFound_Session":
-            print(Fore.RED + Style.BRIGHT + f"=== [ Token Invalid {token} ] ===")
-            token_dict.pop(query, None)  # Remove invalid token
-        else:
-            print(Fore.RED + Style.BRIGHT + "Authentication failed with unknown error")
-    else:
-        print(Fore.RED + Style.BRIGHT + f"Error with status code: {response.status_code}")
+        time.sleep(1)
 
-    time.sleep(1)
-   
-while True:
-    auto_upgrade_energy = "n"
-    if auto_upgrade_energy in ['y', 'n', '']:
-        auto_upgrade_energy = auto_upgrade_energy or 'n'
-        break
-    else:
-        print("Masukkan 'y' atau 'n'.")
 
-while True:
-    auto_upgrade_multitap = "n"
-    if auto_upgrade_multitap in ['y', 'n', '']:
-        auto_upgrade_multitap = auto_upgrade_multitap or 'n'
-        break
-    else:
-        print("Masukkan 'y' atau 'n'.")
-        
-if auto_upgrade_passive == 'y':
-    while True:
-        lanjut_upgrade = "y"
-        if lanjut_upgrade in ['y', 'n', '']:
-            lanjut_upgrade = lanjut_upgrade or 'n'
-            break
-        else:
-            print("Masukkan 'y' atau 'n'.")
 
-if ask_cipher == 'y':
-    while True:
-        cipher_text = "ihirr"
-        if cipher_text:
-            break
-        else:
-            print("Masukkan sandi harian blok!.")
-   
+# while True:
+#     auto_upgrade_energy = input("Upgrade Energy (default n) ? (y/n): ").strip().lower()
+#     if auto_upgrade_energy in ['y', 'n', '']:
+#         auto_upgrade_energy = auto_upgrade_energy or 'n'
+#         break
+#     else:
+#         print("Masukkan 'y' atau 'n'.")
+
+# while True:
+#     auto_upgrade_multitap = input("Upgrade Multitap (default n) ? (y/n): ").strip().lower()
+#     if auto_upgrade_multitap in ['y', 'n', '']:
+#         auto_upgrade_multitap = auto_upgrade_multitap or 'n'
+#         break
+#     else:
+#         print("Masukkan 'y' atau 'n'.")
+
 
 def print_welcome_message():
     print(r"""
@@ -566,22 +729,12 @@ def print_welcome_message():
 █▀▀ █░█ ▄▀█ █░░ █ █▄▄ █ █▀▀
 █▄█ █▀█ █▀█ █▄▄ █ █▄█ █ ██▄
           """)
-    print(Fore.GREEN + Style.BRIGHT + "Hamster Kombat BOT!")
-    print(Fore.GREEN + Style.BRIGHT + "Update Link: https://github.com/adearman/hamsterkombat")
-    print(Fore.YELLOW + Style.BRIGHT + "Free Konsultasi Join Telegram Channel: https://t.me/ghalibie")
-    print(Fore.BLUE + Style.BRIGHT + "Buy me a coffee :) 0823 2367 3487 GOPAY / DANA")
-    print(Fore.RED + Style.BRIGHT + "NOT FOR SALE! Ngotak dikit bang. Ngoding susah2 kau tinggal rename :)\n\n")
+    print("\033[92m" + "\033[1m" + "Hamster Kombat BOT!")
+    print("\033[92m" + "\033[1m" + "Update Link: https://github.com/adearman/hamsterkombat")
+    print("\033[93m" + "\033[1m" + "Free Konsultasi Join Telegram Channel: https://t.me/ghalibie")
+    print("\033[94m" + "\033[1m" + "Buy me a coffee :) 0823 2367 3487 GOPAY / DANA")
+    print("\033[91m" + "\033[1m" + "NOT FOR SALE ! Ngotak dikit bang. Ngoding susah2 kau tinggal rename :)\n\n")
+
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("Usage: python hamster.py [query_id]")
-        sys.exit(1)
-        
-
-    query = sys.argv[1]
-    auto_upgrade_passive = sys.argv[2]
-    cek_task_list = sys.argv[3]
-    auto_claim_daily_combo = sys.argv[4]
-    ask_cipher = sys.argv[5]
-
-    main(query, auto_upgrade_passive, cek_task_list, auto_claim_daily_combo, ask_cipher)
+    main()
