@@ -428,8 +428,8 @@ def parse_arguments():
     parser.add_argument('-l', '--combo-list', nargs='+',
                         help="Daftar id combo (e.g., -l id1 id2 id3)")
 
-    parser.add_argument('-f', '--token-file', required=True,
-                        help="Path ke file token (contoh initdata.txt)")
+    parser.add_argument('-f', '--file', type=str, required=True,
+                        help="File to load tokens from")
 
     return parser.parse_args()
 
@@ -442,7 +442,7 @@ def main():
     args = parse_arguments()
     print_welcome_message()
     print(Fore.GREEN + Style.BRIGHT + "Starting Hamster Kombat....\n\n")
-    init_data = load_tokenss()
+    init_data = load_tokenss(args.file)
     token_cycle = cycle(init_data)
 
     
