@@ -14,14 +14,14 @@ Note : still have many bug
 - python3 hamster.py (args)
 
 '''
--u = Auto Upgrade Passive 
--m = max price
--c = Task
--a = auto claim ciper
--t = ciper text
--d = auto claim daily combo
--l = combo list
--f = token file
+- u = Auto Upgrade Passive 
+- m = max price
+- c = Task
+- a = auto claim ciper
+- t = ciper text
+- d = auto claim daily combo
+- l = combo list
+- f = token file
 '''
 
 - example : python3 hamster.py -f initdata.txt -c y -a y -t hii -m 10000000
