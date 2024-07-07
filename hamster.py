@@ -278,7 +278,7 @@ def buy_upgrade_combo(token, upgrade_id):
             print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Gagal mendapatkan respons JSON. Status: {response.status_code}", flush=True)
             return None
 
-def auto_upgrade_passive_earn(token):
+def auto_upgrade_passive_earn(token, max_price):
     upgrade_list = read_upgrade_list('upgrade_list.txt')
     insufficient_funds = False
     cooldown_upgrades = {}  # Dictionary untuk menyimpan waktu cooldown yang tersisa untuk setiap upgrade
@@ -298,7 +298,7 @@ def auto_upgrade_passive_earn(token):
 
                 price = upgrade['price']
                 # Skip upgrade jika harga lebih dari max_price
-                if price > args.max_price:
+                if price > max_price:
                     print(Fore.YELLOW + Style.BRIGHT + f"[ Upgrade Minning ] : Upgrade {upgrade['name']} dilewati karena harga terlalu tinggi: {price}")
                     continue
 
@@ -657,7 +657,7 @@ def main():
                 
                 if args.auto_upgrade_passive == 'y':
                     print(Fore.GREEN + f"\r[ Upgrade Minning ] : Checking...", end="", flush=True)
-                    auto_upgrade_passive_earn(token)
+                    auto_upgrade_passive_earn(token, args.max_price)
                     
             else:
 
