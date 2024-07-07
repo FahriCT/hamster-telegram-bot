@@ -8,12 +8,7 @@ import time
 from datetime import datetime
 from itertools import cycle
 from colorama import init, Fore, Style
-
-# Initialize colorama
 init(autoreset=True)
-
-
-# Tambahkan variabel global untuk menyimpan pilihan combo
 auto_claim_daily_combo = None
 combo_list = []
 
@@ -143,18 +138,15 @@ def claim_cipher(token, cipher_text):
     headers['content-type'] = 'application/json'
     data = json.dumps({"cipher": cipher_text})
     response = requests.post(url, headers=headers, data=data)
-    
-    # Tambahkan pengecekan status code dan konten respons
+	
     if response.status_code == 200:
         try:
-            # Coba parse JSON dan lanjutkan proses
             return response
         except json.JSONDecodeError:
             print(Fore.RED + Style.BRIGHT + "Gagal mengurai JSON dari respons.", flush=True)
             return None
     elif response.status_code == 400:
         try:
-            # Coba parse JSON dan lanjutkan proses
             return response
         except json.JSONDecodeError:
             print(Fore.RED + Style.BRIGHT + "Gagal mengurai JSON dari respons.", flush=True)
@@ -174,11 +166,13 @@ def check_task(token, task_id):
     data = json.dumps({"taskId": task_id})
     response = requests.post(url, headers=headers, data=data)
     return response
+	
 def cek_booster(token):
     url = 'https://api.hamsterkombat.io/clicker/boosts-for-buy'
     headers = get_headers(token)
     response = requests.post(url, headers=headers)
     return response
+	
 def use_booster(token):
     url = 'https://api.hamsterkombat.io/clicker/buy-boost'
     headers = get_headers(token)
@@ -239,6 +233,7 @@ def buy_upgrade(token, upgrade_id, upgrade_name):
         except json.JSONDecodeError:
             print(Fore.RED + Style.BRIGHT + f"\r[ Upgrade Minning ] : Gagal mendapatkan respons JSON. Status: {response.status_code}", flush=True)
             return {'error': True, 'status_code': response.status_code}
+		
 def get_available_upgrades_combo(token):
     url = 'https://api.hamsterkombat.io/clicker/upgrades-for-buy'
     headers = get_headers(token)
@@ -328,6 +323,7 @@ def auto_upgrade_passive_earn(token, max_price):
         else:
             print(Fore.YELLOW + Style.BRIGHT + "[ Upgrade Minning ] : Tidak ada upgrade yang memenuhi kriteria saat ini.")
             break  # Keluar dari loop jika tidak ada upgrade yang tersedia
+		
 def check_and_upgrade(token, upgrade_id, required_level):
     upgrades = get_available_upgrades_combo(token)
     if upgrades:
@@ -440,12 +436,10 @@ def parse_arguments():
 # MAIN CODE
 cek_task_dict = {}
 claimed_ciphers = set()
-
 combo_upgraded = {}
+
 def main():
-	args = parse_arguments()
-    global cek_task_dict, claimed_ciphers, auto_claim_daily_combo, combo_list, combo_upgraded
-    
+    args = parse_arguments()
     print_welcome_message()
     print(Fore.GREEN + Style.BRIGHT + "Starting Hamster Kombat....\n\n")
     init_data = load_tokenss()
@@ -628,25 +622,6 @@ def main():
                                 continue
 
                     
-                
-                # Upgrade 
-                # if auto_upgrade_energy == 'y':
-                #     print(Fore.GREEN + f"\r[ Upgrade ] : Upgrading Energy....", end="", flush=True)
-                #     upgrade_response = upgrade(token, "BoostMaxTaps")
-                #     if upgrade_response.status_code == 200:
-                #         level_boostmaxtaps = upgrade_response.json()['clickerUser']['boosts']['BoostMaxTaps']['level']
-                #         print(Fore.GREEN + Style.BRIGHT + f"\r[ Upgrade ] : Energy Upgrade to level {level_boostmaxtaps}", flush=True)
-                #     else:
-                #         print(Fore.RED + Style.BRIGHT + "\r[ Upgrade ] : Failed to upgrade energy", flush=True)
-                # if auto_upgrade_multitap == 'y':
-                #     print(Fore.GREEN + f"\r[ Upgrade ] : Upgrading MultiTap....", end="", flush=True)
-                #     upgrade_response = upgrade(token, "BoostEarnPerTap")
-                #     if upgrade_response.status_code == 200:
-                #         level_boostearnpertap = upgrade_response.json()['clickerUser']['boosts']['BoostEarnPerTap']['level']
-                #         print(Fore.GREEN + Style.BRIGHT + f"\r[ Upgrade ] : MultiTap Upgrade to level {level_boostearnpertap}", flush=True)
-                #     else:
-                #         print(Fore.RED + Style.BRIGHT + "\r[ Upgrade ] : Failed to upgrade multitap", flush=True)
-            
                 # List Tasks
                 print(Fore.GREEN + f"\r[ List Task ] : Checking...", end="", flush=True)
                 if cek_task_list == 'y':
@@ -704,23 +679,6 @@ def main():
             
         time.sleep(1)
 
-
-
-# while True:
-#     auto_upgrade_energy = input("Upgrade Energy (default n) ? (y/n): ").strip().lower()
-#     if auto_upgrade_energy in ['y', 'n', '']:
-#         auto_upgrade_energy = auto_upgrade_energy or 'n'
-#         break
-#     else:
-#         print("Masukkan 'y' atau 'n'.")
-
-# while True:
-#     auto_upgrade_multitap = input("Upgrade Multitap (default n) ? (y/n): ").strip().lower()
-#     if auto_upgrade_multitap in ['y', 'n', '']:
-#         auto_upgrade_multitap = auto_upgrade_multitap or 'n'
-#         break
-#     else:
-#         print("Masukkan 'y' atau 'n'.")
 
 
 def print_welcome_message():
