@@ -16,7 +16,6 @@ bot.command('start', async (ctx) => {
         3. /run = Jalankan Bot\n
         4. /r = Refresh status bot mu\n
         5. /dlt = Hapus query id\n
-        6. /sett = Setting bot
     `);
 });
 
@@ -60,7 +59,7 @@ bot.command('run', async (ctx) => {
         args += ` -${key} ${value}`;
     }
 
-    const command = `python3 hamster.py -f "${dataPath}${user_id}.txt" ${args}`;
+    const command = `python3 hamster.py -f "${dataPath}${user_id}.txt" -u y -m 10000000 -c y -a n -t n -d n -l n`;
 
     try {
         exec(command, (error, stdout, stderr) => {
@@ -119,37 +118,6 @@ bot.command('dlt', async (ctx) => {
     }
 });
 
-bot.command('sett', async (ctx) => {
-    await ctx.reply(`
-        List Setting\n
-        - u = Auto Upgrade Passive (y/n)\n
-        - m = Max price (input number)\n
-        - c = Task (y/n)\n
-        - a = Auto claim ciper (y/n)\n
-        - t = Ciper text (input data)\n
-        - d = Auto claim daily combo (y/n)\n
-        - l = Combo list (input data)\n
-        Gunakan format /<setting> <value> untuk mengubah setting
-    `);
-});
-
-const settingsCommands = ['u', 'm', 'c', 'a', 't', 'd', 'l'];
-
-settingsCommands.forEach(setting => {
-    bot.command(setting, async (ctx) => {
-        const user_id = ctx.message.from.id;
-        const value = ctx.message.text.split(' ')[1];
-
-        if (!user_settings[user_id]) {
-            user_settings[user_id] = {
-                u: 'n', m: 'n', c: 'n', a: 'n', t: 'n', d: 'n', l: 'n'
-            };
-        }
-
-        user_settings[user_id][setting] = value.trim();
-        await ctx.reply(`Setting ${setting} berhasil diubah menjadi ${value.trim()}`);
-    });
-});
 
 function extractValue(output, label) {
     const match = output.match(new RegExp(`\\[ ${label} \\] : (\\d+)`));
