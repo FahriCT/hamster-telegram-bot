@@ -11,11 +11,11 @@ const user_settings = {};
 bot.command('start', async (ctx) => {
     await ctx.reply(`
         BOT FAHRI HAMSTER\n
-        1. /in <query_id> = Input Query id\n
-        2. /ck = Cek query id mu\n
-        3. /run = Jalankan Bot\n
-        4. /r = Refresh status bot mu\n
-        5. /dlt = Hapus query id\n
+        1. /in <query_id> - Input Query ID ✍️\n
+        2. /ck = Cek query id mu 🔍\n
+        3. /run = Jalankan Bot 🚀\n
+        4. /r = Refresh status bot mu 🔄\n
+        5. /dlt = Hapus query id ❌\n
     `);
 });
 
@@ -76,13 +76,13 @@ bot.command('run', async (ctx) => {
 
             const output = stdout;
             const response = "Bot berjalan\n" +
-                `[ Level ] : ${extractValue(output, "Level")}\n` +
-                `[ Total Earned ] : ${extractValue(output, "Total Earned")}\n` +
-                `[ Coin ] : ${extractValue(output, "Coin")}\n` +
-                `[ Energy ] : ${extractValue(output, "Energy")}\n` +
-                `[ Level Energy ] : ${extractValue(output, "Level Energy")}\n` +
-                `[ Level Tap ] : ${extractValue(output, "Level Tap")}\n` +
-                `[ Exchange ] : ${extractValue(output, "Exchange")}\n`;
+                `[ Level 📈 ] : ${extractValue(output, "Level")}\n` +
+                `[ Total Earned 💰 ] : ${extractValue(output, "Total Earned")}\n` +
+                `[ Coin 🪙 ] : ${extractValue(output, "Coin")}\n` +
+                `[ Energy 🔋 ] : ${extractValue(output, "Energy")}\n` +
+                `[ Level Energy ⚡ ] : ${extractValue(output, "Level Energy")}\n` +
+                `[ Level Tap  👆 ] : ${extractValue(output, "Level Tap")}\n` +
+                `[ Exchange 🔄 ] : ${extractValue(output, "Exchange")}\n`;
 
             user_status[user_id] = response;
             ctx.reply(response);
