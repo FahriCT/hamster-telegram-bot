@@ -60,7 +60,7 @@ bot.command('run', async (ctx) => {
         args += ` -${key} ${value}`;
     }
 
-    const command = `python3 hamster.py -f ${dataPath}${user_id}.txt ${args}`;
+    const command = `python3 hamster.py -f "${dataPath}${user_id}.txt" ${args}`;
 
     try {
         exec(command, (error, stdout, stderr) => {
