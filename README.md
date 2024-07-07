@@ -12,6 +12,8 @@ Note : still have many bug
 
 # Run Without bot.js :
 - python3 hamster.py (args)
+
+'''
 -u = Auto Upgrade Passive 
 -m = max price
 -c = Task
@@ -19,7 +21,8 @@ Note : still have many bug
 -t = ciper text
 -d = auto claim daily combo
 -l = combo list
--f = token fike
+-f = token file
+'''
 
 - example : python3 hamster.py -f initdata.txt -c y -a y -t hii -m 10000000
 
