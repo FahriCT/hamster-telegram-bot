@@ -75,6 +75,7 @@ def get_token(init_data_raw):
     except Exception as e:
         print(Fore.RED + Style.BRIGHT + f"\rGagal Mendapatkan Token. Error: {str(e)}", flush=True)
     return None
+    
 def authenticate(token):
     url = 'https://api.hamsterkombat.io/auth/me-telegram'
     headers = get_headers(token)
@@ -95,6 +96,7 @@ def claim_daily(token):
     data = json.dumps({"taskId": "streak_days"})
     response = requests.post(url, headers=headers, data=data)
     return response
+    
 def upgrade(token, upgrade_type):
     url = 'https://api.hamsterkombat.io/clicker/buy-boost'
     headers = get_headers(token)
@@ -131,12 +133,12 @@ def exchange(token):
 
 
 
-def claim_cipher(token, cipher_text):
+def claim_cipher(token):
     url = 'https://api.hamsterkombat.io/clicker/claim-daily-cipher'
     headers = get_headers(token)
     headers['accept'] = 'application/json'
     headers['content-type'] = 'application/json'
-    data = json.dumps({"cipher": cipher_text})
+    data = json.dumps({"cipher": args.cipher_text})
     response = requests.post(url, headers=headers, data=data)
 	
     if response.status_code == 200:
@@ -276,7 +278,7 @@ def buy_upgrade_combo(token, upgrade_id):
             print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Gagal mendapatkan respons JSON. Status: {response.status_code}", flush=True)
             return None
 
-def auto_upgrade_passive_earn(token, max_price):
+def auto_upgrade_passive_earn(token):
     upgrade_list = read_upgrade_list('upgrade_list.txt')
     insufficient_funds = False
     cooldown_upgrades = {}  # Dictionary untuk menyimpan waktu cooldown yang tersisa untuk setiap upgrade
@@ -296,7 +298,7 @@ def auto_upgrade_passive_earn(token, max_price):
 
                 price = upgrade['price']
                 # Skip upgrade jika harga lebih dari max_price
-                if price > max_price:
+                if price > args.max_price:
                     print(Fore.YELLOW + Style.BRIGHT + f"[ Upgrade Minning ] : Upgrade {upgrade['name']} dilewati karena harga terlalu tinggi: {price}")
                     continue
 
@@ -564,10 +566,10 @@ def main():
                 else:
                     print(Fore.RED + Style.BRIGHT + f"\r[ Checkin Daily ] Gagal cek daily {response.status_code}", flush=True)
                 
-                if ask_cipher == 'y':
+                if args.auto_claim_cipher == 'y':
                     if token not in claimed_ciphers:
                         print(Fore.GREEN + Style.BRIGHT + f"\r[ Claim Cipher ] : Claiming cipher...", end="", flush=True)
-                        response = claim_cipher(token, cipher_text)
+                        response = claim_cipher(token)
                         try:
                             if response.status_code == 200:
                                 bonuscoins = response.json()['dailyCipher']['bonusCoins']
@@ -586,14 +588,14 @@ def main():
                     else:
                         print(Fore.RED + Style.BRIGHT + f"\r[ Claim Cipher ] : Cipher sudah pernah di-claim sebelumnya.", flush=True)
                 # daily combo
-                if auto_claim_daily_combo == 'y' and not combo_upgraded[init_data_raw]:
+                if args.auto_claim_daily_combo == 'y' and not combo_upgraded[init_data_raw]:
                     cek = claim_daily_combo(token)
                     if cek.get('error_code') != 'DAILY_COMBO_DOUBLE_CLAIMED':
                         purchased_combos = check_combo_purchased(token)
                         if purchased_combos is None:
                             print(Fore.RED + Style.BRIGHT + "\r[ Daily Combo ] : Gagal mendapatkan status combo, akan mencoba lagi dengan akun berikutnya.", flush=True)
                         else:
-                            for combo in combo_list:
+                            for combo in args.combo_list:
                                 if combo in purchased_combos:
                                     print(Fore.GREEN + Style.BRIGHT + f"\r[ Daily Combo ] : {combo} sudah dibeli.", flush=True)
                                 else:
@@ -610,7 +612,7 @@ def main():
                                         print(Fore.RED + Style.BRIGHT + f"\r[ Daily Combo ] : Mencoba membeli {upgrade_key} level {upgrade_level}", flush=True)    
                                         result = check_and_upgrade(token, upgrade_key, upgrade_level)
                             combo_upgraded[init_data_raw] = True
-                            required_combos = set(combo_list)
+                            required_combos = set(args.combo_list)
                             purchased_combos = set(check_combo_purchased(token))
                             if purchased_combos == required_combos:
                                 print(Fore.GREEN + Style.BRIGHT + "\r[ Daily Combo ] : Semua combo telah dibeli, mencoba mengklaim daily combo.                 ", end="" ,flush=True)
@@ -624,7 +626,7 @@ def main():
                     
                 # List Tasks
                 print(Fore.GREEN + f"\r[ List Task ] : Checking...", end="", flush=True)
-                if cek_task_list == 'y':
+                if args.cek_task_list == 'y':
                     if token not in cek_task_dict:  # Pastikan token ada dalam dictionary
                         cek_task_dict[token] = False  # Inisialisasi jika belum ada
                     if not cek_task_dict[token]:  # Cek status cek_task untuk token ini
@@ -653,9 +655,9 @@ def main():
                     
                 # cek upgrade
                 
-                if auto_upgrade_passive == 'y':
+                if args.auto_upgrade_passive == 'y':
                     print(Fore.GREEN + f"\r[ Upgrade Minning ] : Checking...", end="", flush=True)
-                    auto_upgrade_passive_earn(token, max_price)
+                    auto_upgrade_passive_earn(token)
                     
             else:
 
