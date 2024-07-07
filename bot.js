@@ -1,4 +1,4 @@
-3const { Telegraf } = require('telegraf');
+const { Telegraf } = require('telegraf');
 const { exec } = require('child_process');
 const fs = require('fs');
 const BOT_TOKEN = fs.readFileSync('token.txt', 'utf8').trim();
