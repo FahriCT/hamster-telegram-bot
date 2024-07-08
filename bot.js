@@ -53,7 +53,7 @@ bot.command('run', async (ctx) => {
     }
 
     try {
-        exec(`python3 hamster.py -f "data/${user_id}.txt" -u y -m 10000000 -c y -a n -t n -d n -l n -ci ${chat_id}`, (error, stdout, stderr) => {
+        exec(`python3 hamster.py -f "${dataPath}${user_id}.txt" -u y -m 10000000 -c y -a n -t n -d n -l n -ci ${chat_id}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`❌ Gagal menjalankan bot: ${error.message}`);
                 ctx.reply(`❌ Gagal menjalankan bot: ${error.message}`);
