@@ -445,8 +445,14 @@ combo_upgraded = {}
 def main():
     args = parse_arguments()
     print_welcome_message()
-    print(Fore.GREEN + Style.BRIGHT + "Starting Hamster Kombat....\n\n")
-    init_data = load_tokenss(args.file)
+    print(Fore.GREEN + Style.BRIGHT + "Starting Hamster Kombat....\n\n"
+
+    try:
+        init_data = load_tokenss(args.file)
+    except Exception as e:
+        print(Fore.RED + Style.BRIGHT + f"Kesalahan saat memuat token: {e}")
+        return
+
     token_cycle = cycle(init_data)
     token_dict = {}
     while True:
